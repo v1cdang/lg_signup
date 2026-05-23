@@ -125,6 +125,30 @@ for each row execute function public.touch_updated_at();
 create trigger follow_ups_touch_updated_at before update on public.follow_ups
 for each row execute function public.touch_updated_at();
 
+create or replace function public.handle_new_auth_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  insert into public.profiles (id, full_name, email, role)
+  values (
+    new.id,
+    coalesce(new.raw_user_meta_data ->> 'full_name', split_part(new.email, '@', 1)),
+    new.email,
+    'lg_head'
+  )
+  on conflict (id) do nothing;
+
+  return new;
+end;
+$$;
+
+create trigger on_auth_user_created
+after insert on auth.users
+for each row execute function public.handle_new_auth_user();
+
 create or replace function public.current_user_role()
 returns public.app_role
 language sql
@@ -169,6 +193,10 @@ for select to authenticated using (true);
 create policy "admins manage profiles" on public.profiles
 for all to authenticated using (public.current_user_role() = 'admin')
 with check (public.current_user_role() = 'admin');
+
+create policy "users update their own profile name" on public.profiles
+for update to authenticated using (id = auth.uid())
+with check (id = auth.uid() and role = public.current_user_role());
 
 create policy "staff read light groups" on public.light_groups
 for select to authenticated using (true);

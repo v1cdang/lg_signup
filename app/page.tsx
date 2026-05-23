@@ -14,6 +14,9 @@ export default function HomePage() {
           <Button asChild variant="ghost">
             <Link href="/login">Sign in</Link>
           </Button>
+          <Button asChild variant="outline">
+            <Link href="/register">Create account</Link>
+          </Button>
           <Button asChild>
             <Link href="/signup">Join an LG</Link>
           </Button>

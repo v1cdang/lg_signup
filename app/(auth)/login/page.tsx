@@ -24,7 +24,10 @@ export default function LoginPage() {
             <Button>Sign in</Button>
           </form>
           <p className="mt-4 text-center text-sm text-muted-foreground">
-            Need access? Ask an admin to invite you from user management.
+            New here?{" "}
+            <Link href="/register" className="font-medium text-primary hover:underline">
+              Create an account
+            </Link>
           </p>
           <Button asChild className="mt-4 w-full" variant="outline">
             <Link href="/signup">Go to public sign-up</Link>
