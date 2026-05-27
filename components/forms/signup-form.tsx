@@ -9,6 +9,9 @@ import {
   CalendarDays,
   Users,
   MessageSquare,
+  User,
+  Cake,
+  Facebook,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -17,25 +20,24 @@ import {
   CardContent,
   CardHeader,
 } from "@/components/ui/card";
+
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
-const LIFE_STAGES = [
-  "Student",
-  "Young Professional",
-  "Married",
-  "Single Parent",
-  "Young Couple",
-  "Family with Kids",
-  "Senior Adult",
+const SCHEDULES = [
+  "Sunday after Feast 1",
+  "Sunday after Feast 2",
+  "Saturday",
+  "Weekdays 7PM",
 ];
 
-const SCHEDULES = [
-  "Weeknights",
-  "Saturday Morning",
-  "Saturday Afternoon",
-  "Sunday Afternoon",
+const LIFE_MINISTRIES = [
+  "Couples",
+  "Singles & Young Adults",
+  "Solo Parents",
+  "Wives",
+  "Others",
 ];
 
 export function SignupForm() {
@@ -43,13 +45,22 @@ export function SignupForm() {
     "idle" | "submitting" | "success" | "error"
   >("idle");
 
-  const [selectedSchedule, setSelectedSchedule] = useState<string[]>([]);
+  const [selectedSchedules, setSelectedSchedules] = useState<string[]>([]);
+  const [selectedMinistries, setSelectedMinistries] = useState<string[]>([]);
 
   function toggleSchedule(schedule: string) {
-    setSelectedSchedule((prev) =>
+    setSelectedSchedules((prev) =>
       prev.includes(schedule)
         ? prev.filter((s) => s !== schedule)
         : [...prev, schedule]
+    );
+  }
+
+  function toggleMinistry(ministry: string) {
+    setSelectedMinistries((prev) =>
+      prev.includes(ministry)
+        ? prev.filter((m) => m !== ministry)
+        : [...prev, ministry]
     );
   }
 
@@ -61,7 +72,15 @@ export function SignupForm() {
     const form = event.currentTarget;
     const formData = new FormData(form);
 
-    formData.set("preferredSchedule", selectedSchedule.join(", "));
+    formData.set(
+      "preferredSchedules",
+      selectedSchedules.join(", ")
+    );
+
+    formData.set(
+      "lifeMinistries",
+      selectedMinistries.join(", ")
+    );
 
     const response = await fetch("/api/public/signup", {
       method: "POST",
@@ -73,7 +92,8 @@ export function SignupForm() {
 
     if (response.ok) {
       form.reset();
-      setSelectedSchedule([]);
+      setSelectedSchedules([]);
+      setSelectedMinistries([]);
       setState("success");
     } else {
       setState("error");
@@ -81,28 +101,19 @@ export function SignupForm() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-3xl">
+    <div className="mx-auto w-full max-w-4xl">
       <Card className="overflow-hidden rounded-3xl border border-border/50 shadow-xl">
-        <CardHeader className="space-y-4 bg-gradient-to-b from-muted/50 to-background px-6 py-8 md:px-10">
-          <div className="space-y-2">
+        <CardHeader className="space-y-4 bg-gradient-to-b from-muted/40 to-background px-6 py-8 md:px-10">
+          <div className="space-y-3 text-center">
             <h1 className="text-3xl font-bold tracking-tight">
               Join a Light Group
             </h1>
 
-            <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground md:text-base">
-              Find a community where you can grow spiritually, build meaningful
-              relationships, and journey with others.
+            <p className="mx-auto max-w-2xl text-sm leading-relaxed text-muted-foreground md:text-base">
+              Kindly complete this form so we can help match you
+              with a Light Group based on volunteer availability,
+              schedule, and ministry fit.
             </p>
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            <div className="rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
-              Takes less than 2 minutes
-            </div>
-
-            <div className="rounded-full bg-secondary px-3 py-1 text-xs font-medium text-muted-foreground">
-              We’ll help match you with a group
-            </div>
           </div>
         </CardHeader>
 
@@ -115,22 +126,22 @@ export function SignupForm() {
 
               <div className="space-y-2">
                 <h2 className="text-2xl font-bold">
-                  You’re all set 🎉
+                  You're all set 🎉
                 </h2>
 
-                <p className="max-w-md text-sm leading-relaxed text-muted-foreground">
-                  Your sign-up has been received. A coordinator will reach out
-                  soon to help connect you with a Light Group.
+                <p className="max-w-md text-sm text-muted-foreground">
+                  Your sign-up has been received. A coordinator
+                  will contact you soon.
                 </p>
               </div>
             </div>
           ) : (
-            <form onSubmit={onSubmit} className="space-y-8">
-              {/* BASIC INFO */}
-              <section className="space-y-5">
+            <form onSubmit={onSubmit} className="space-y-10">
+              {/* PARTICIPANT INFORMATION */}
+              <section className="space-y-6">
                 <div className="space-y-1">
-                  <h2 className="text-lg font-semibold">
-                    Basic Information
+                  <h2 className="text-xl font-semibold">
+                    Participant Information
                   </h2>
 
                   <p className="text-sm text-muted-foreground">
@@ -138,21 +149,64 @@ export function SignupForm() {
                   </p>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="fullName">Full Name</Label>
-
-                  <Input
-                    id="fullName"
-                    name="fullName"
-                    required
-                    placeholder="Juan Dela Cruz"
-                    className="h-12 rounded-xl"
-                  />
-                </div>
-
+                {/* FULL NAME + NICKNAME */}
                 <div className="grid gap-5 md:grid-cols-2">
                   <div className="space-y-2">
-                    <Label htmlFor="email">Email Address</Label>
+                    <Label htmlFor="fullName">
+                      Full Name
+                    </Label>
+
+                    <div className="relative">
+                      <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+
+                      <Input
+                        id="fullName"
+                        name="fullName"
+                        required
+                        placeholder="Juan Dela Cruz"
+                        className="h-12 rounded-xl pl-10"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="nickname">
+                      Nickname
+                    </Label>
+
+                    <Input
+                      id="nickname"
+                      name="nickname"
+                      placeholder="Juan"
+                      className="h-12 rounded-xl"
+                    />
+                  </div>
+                </div>
+
+                {/* PHONE + EMAIL */}
+                <div className="grid gap-5 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">
+                      Mobile Number / Viber
+                    </Label>
+
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+
+                      <Input
+                        id="phone"
+                        name="phone"
+                        required
+                        placeholder="0917 123 4567"
+                        className="h-12 rounded-xl pl-10"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="email">
+                      Email Address
+                    </Label>
 
                     <div className="relative">
                       <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -167,83 +221,96 @@ export function SignupForm() {
                       />
                     </div>
                   </div>
+                </div>
 
+                {/* BIRTHDATE + SOCIAL */}
+                <div className="grid gap-5 md:grid-cols-2">
                   <div className="space-y-2">
-                    <Label htmlFor="phone">
-                      Phone Number
+                    <Label htmlFor="birthdate">
+                      Birthdate
                     </Label>
 
                     <div className="relative">
-                      <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <Cake className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
 
                       <Input
-                        id="phone"
-                        name="phone"
-                        placeholder="0917 123 4567"
+                        id="birthdate"
+                        name="birthdate"
+                        type="date"
+                        className="h-12 rounded-xl pl-10"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="socials">
+                      Social Media Accounts
+                    </Label>
+
+                    <div className="relative">
+                      <Facebook className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+
+                      <Input
+                        id="socials"
+                        name="socials"
+                        placeholder="FB, IG, Messenger"
                         className="h-12 rounded-xl pl-10"
                       />
                     </div>
                   </div>
                 </div>
+
+                {/* FEAST ATTENDANCE */}
+                <div className="space-y-4 rounded-2xl border bg-muted/20 p-5">
+                  <div className="space-y-1">
+                    <h3 className="font-semibold">
+                      Feast Bellevue Attendance
+                    </h3>
+
+                    <p className="text-sm text-muted-foreground">
+                      Let us know if you're already attending.
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap gap-3">
+                    {[
+                      "Session 1",
+                      "Session 2",
+                      "Not Yet Attending",
+                    ].map((option) => (
+                      <label
+                        key={option}
+                        className="flex cursor-pointer items-center gap-2 rounded-full border bg-background px-4 py-2 text-sm hover:border-primary"
+                      >
+                        <input
+                          type="radio"
+                          name="feastAttendance"
+                          value={option}
+                        />
+
+                        {option}
+                      </label>
+                    ))}
+                  </div>
+                </div>
               </section>
 
-              {/* MATCHING */}
-              <section className="space-y-5 rounded-2xl border bg-muted/20 p-5 md:p-6">
+              {/* MATCHING PREFERENCES */}
+              <section className="space-y-6 rounded-3xl border bg-muted/20 p-6">
                 <div className="space-y-1">
-                  <h2 className="text-lg font-semibold">
-                    Help Us Match You
+                  <h2 className="text-xl font-semibold">
+                    Matching Preferences
                   </h2>
 
                   <p className="text-sm text-muted-foreground">
-                    We’ll use these details to connect you with the right group.
+                    Help us connect you with the right group.
                   </p>
                 </div>
 
-                <div className="grid gap-5 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="age">Age</Label>
-
-                    <Input
-                      id="age"
-                      name="age"
-                      type="number"
-                      min="12"
-                      placeholder="18"
-                      className="h-12 rounded-xl"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="lifeStage">
-                      Current Season of Life
-                    </Label>
-
-                    <div className="relative">
-                      <Users className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-
-                      <select
-                        id="lifeStage"
-                        name="lifeStage"
-                        className="flex h-12 w-full rounded-xl border border-input bg-background pl-10 pr-4 text-sm outline-none ring-offset-background"
-                        defaultValue=""
-                      >
-                        <option value="" disabled>
-                          Select one
-                        </option>
-
-                        {LIFE_STAGES.map((stage) => (
-                          <option key={stage} value={stage}>
-                            {stage}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-                </div>
-
+                {/* LOCATION */}
                 <div className="space-y-2">
                   <Label htmlFor="preferredLocation">
-                    Preferred Area
+                    Preferred Area / Location
                   </Label>
 
                   <div className="relative">
@@ -258,25 +325,28 @@ export function SignupForm() {
                   </div>
                 </div>
 
+                {/* SCHEDULE */}
                 <div className="space-y-3">
-                  <Label>Available Schedule</Label>
+                  <Label>Preferred Schedule</Label>
 
                   <div className="flex flex-wrap gap-3">
                     {SCHEDULES.map((schedule) => {
                       const active =
-                        selectedSchedule.includes(schedule);
+                        selectedSchedules.includes(schedule);
 
                       return (
                         <button
                           key={schedule}
                           type="button"
-                          onClick={() => toggleSchedule(schedule)}
+                          onClick={() =>
+                            toggleSchedule(schedule)
+                          }
                           className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition-all
-                            ${
-                              active
-                                ? "border-primary bg-primary text-primary-foreground shadow-sm"
-                                : "border-border bg-background hover:border-primary/40 hover:bg-muted"
-                            }`}
+                          ${
+                            active
+                              ? "border-primary bg-primary text-primary-foreground"
+                              : "border-border bg-background hover:border-primary/50"
+                          }`}
                         >
                           <CalendarDays className="h-4 w-4" />
                           {schedule}
@@ -287,47 +357,104 @@ export function SignupForm() {
 
                   <input
                     type="hidden"
-                    name="preferredSchedule"
-                    value={selectedSchedule.join(", ")}
+                    name="preferredSchedules"
+                    value={selectedSchedules.join(", ")}
+                  />
+                </div>
+
+                {/* LIFE MINISTRY */}
+                <div className="space-y-3">
+                  <Label>Life Ministry</Label>
+
+                  <div className="flex flex-wrap gap-3">
+                    {LIFE_MINISTRIES.map((ministry) => {
+                      const active =
+                        selectedMinistries.includes(ministry);
+
+                      return (
+                        <button
+                          key={ministry}
+                          type="button"
+                          onClick={() =>
+                            toggleMinistry(ministry)
+                          }
+                          className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition-all
+                          ${
+                            active
+                              ? "border-primary bg-primary text-primary-foreground"
+                              : "border-border bg-background hover:border-primary/50"
+                          }`}
+                        >
+                          <Users className="h-4 w-4" />
+                          {ministry}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <input
+                    type="hidden"
+                    name="lifeMinistries"
+                    value={selectedMinistries.join(", ")}
                   />
                 </div>
               </section>
 
-              {/* NOTES */}
-              <section className="space-y-4">
+              {/* ALTERNATIVE + NOTES */}
+              <section className="space-y-6">
                 <div className="space-y-1">
-                  <h2 className="text-lg font-semibold">
-                    Additional Notes
+                  <h2 className="text-xl font-semibold">
+                    Additional Information
                   </h2>
 
                   <p className="text-sm text-muted-foreground">
-                    Optional — prayer requests, concerns, preferred setup, or
-                    anything you'd like us to know.
+                    Optional information that may help us place
+                    you better.
                   </p>
                 </div>
 
-                <div className="relative">
-                  <MessageSquare className="absolute left-3 top-4 h-4 w-4 text-muted-foreground" />
+                <div className="space-y-2">
+                  <Label htmlFor="alternativeSchedule">
+                    Alternative Schedule
+                  </Label>
 
-                  <Textarea
-                    id="notes"
-                    name="notes"
-                    rows={5}
-                    placeholder="Share anything that may help us connect you with the right Light Group..."
-                    className="rounded-2xl pl-10 pt-3"
+                  <Input
+                    id="alternativeSchedule"
+                    name="alternativeSchedule"
+                    placeholder="If your preferred schedule is full..."
+                    className="h-12 rounded-xl"
                   />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="notes">
+                    Anything else we should know?
+                  </Label>
+
+                  <div className="relative">
+                    <MessageSquare className="absolute left-3 top-4 h-4 w-4 text-muted-foreground" />
+
+                    <Textarea
+                      id="notes"
+                      name="notes"
+                      rows={5}
+                      placeholder="Prayer requests, concerns, preferred setup, etc."
+                      className="rounded-2xl pl-10 pt-3"
+                    />
+                  </div>
                 </div>
               </section>
 
               {/* ERROR */}
               {state === "error" && (
                 <div className="rounded-xl border border-destructive/20 bg-destructive/5 p-4 text-sm text-destructive">
-                  Something went wrong. Please check your details and try again.
+                  Something went wrong. Please check your form
+                  and try again.
                 </div>
               )}
 
               {/* SUBMIT */}
-              <div className="space-y-4 pt-2">
+              <div className="space-y-4">
                 <Button
                   type="submit"
                   disabled={state === "submitting"}
@@ -338,9 +465,9 @@ export function SignupForm() {
                     : "Join a Light Group"}
                 </Button>
 
-                <p className="text-center text-xs leading-relaxed text-muted-foreground">
-                  A coordinator will reach out within a few days to help connect
-                  you with a group.
+                <p className="text-center text-xs text-muted-foreground">
+                  A Light Group coordinator will contact you
+                  soon.
                 </p>
               </div>
             </form>
